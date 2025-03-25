@@ -1,0 +1,23 @@
+
+
+# # Jupyter Notebook
+# .ipynb_checkpoints
+
+
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+/venv/
+./venv/
+env.bak/
+venv.bak/
+
+# Neglicting Models .h5 files
+./plant_disease_prediction_model.h5
+plant_disease_prediction_model.h5
+./models
+models/
