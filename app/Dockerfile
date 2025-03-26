@@ -16,11 +16,11 @@ EXPOSE 80
 # This command creates a .streamlit directory in the home directory of the container.
 RUN mkdir ~/.streamlit
 
-# This copies your Streamlit configuration file into the .streamlit directory you just created.
-RUN cp config.toml ~/.streamlit/config.toml
+# # This copies your Streamlit configuration file into the .streamlit directory you just created.
+# RUN cp config.toml ~/.streamlit/config.toml
 
-# Similar to the previous step, this copies your Streamlit credentials file into the .streamlit directory.
-RUN cp credentials.toml ~/.streamlit/credentials.toml
+# # Similar to the previous step, this copies your Streamlit credentials file into the .streamlit directory.
+# RUN cp credentials.toml ~/.streamlit/credentials.toml
 
 # This sets the default command for the container to run the app with Streamlit.
 ENTRYPOINT ["streamlit", "run"]
