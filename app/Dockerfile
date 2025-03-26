@@ -8,7 +8,7 @@ COPY . /app
 WORKDIR /app
 
 # This runs pip install for all the packages listed in your requirements.txt file.
-RUN pip install -r requirements.txt
+RUN pip install -r app/requirements.txt
 
 # This tells Docker to listen on port 80 at runtime. Port 80 is the standard port for HTTP.
 EXPOSE 80
