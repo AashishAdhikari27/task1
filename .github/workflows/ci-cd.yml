@@ -34,12 +34,12 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Log in to DockerHub
-        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+        run: echo "${{ secrets.DOCKERHUB_PASSWORD }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
 
       - name: Build and push Docker image
         run: |
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/plant-leaf-diseases-classifier:latest .
-          docker push ${{ secrets.DOCKER_USERNAME }}/plant-leaf-diseases-classifier:latest
+          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/plant-leaf-diseases-classifier:latest .
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/plant-leaf-diseases-classifier:latest
 
   deploy:
     needs: build-and-push-docker-image
@@ -55,11 +55,11 @@ jobs:
 
       - name: Pull and run Docker image
         run: |
-          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
-          docker pull ${{ secrets.DOCKER_USERNAME }}/plant-leaf-diseases-classifier:latest
+          echo "${{ secrets.DOCKERHUB_PASSWORD }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+          docker pull ${{ secrets.DOCKERHUB_USERNAME }}/plant-leaf-diseases-classifier:latest
           docker stop plant-leaf-diseases-classifier || true
           docker rm plant-leaf-diseases-classifier || true
-          docker run -d --name plant-leaf-diseases-classifier -p 80:80 ${{ secrets.DOCKER_USERNAME }}/plant-leaf-diseases-classifier:latest
+          docker run -d --name plant-leaf-diseases-classifier -p 80:80 ${{ secrets.DOCKERHUB_USERNAME }}/plant-leaf-diseases-classifier:latest
         env:
-          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+          DOCKER_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
