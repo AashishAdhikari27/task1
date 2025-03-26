@@ -135,4 +135,16 @@ jobs:
 
 This setup ensures an automated CI/CD pipeline for your project. 🚀
 
-Feel free to modify any part of this document to better fit your project's specifics!
+## Additional Resources
+
+For further learning and a more comprehensive understanding, you may find the following resources helpful:
+
+- **[Setting up a CI/CD workflow on GitHub Actions for a React App](https://dev.to/dyarleniber/setting-up-a-ci-cd-workflow-on-github-actions-for-a-react-app-with-github-pages-and-codecov-4hnp)**
+- **[Implementing CI/CD pipeline with GitHub Actions and GitHub Pages in a React App](https://dev.to/efkumah/implementing-cicd-pipeline-with-github-actions-and-github-pages-in-a-react-app-ij9)**
+- **[Step-by-Step Guide to Configuring a Self-Hosted Runner in GitHub Actions](https://dev.to/s3cloudhub/step-by-step-guide-to-configuring-a-self-hosted-runner-in-github-actions-2024-2b7j)**
+- **[Using secrets in GitHub Actions](https://docs.github.com/en/actions/security-guides/using-secrets-in-github-actions)**
+- **[Deploying a Production-ready React-Express app on AWS](https://gist.github.com/rmiyazaki6499/b564b40e306707c8ff6ca9c67d38fb6f)**
+
+
+- **[GitHub Actions CI/CD for React Apps](https://www.youtube.com/watch?v=R8_veQiYBjI)**
+- **[Setting Up a Self-Hosted Runner in GitHub Actions](https://www.youtube.com/watch?v=L9shM55Qmu8)**
