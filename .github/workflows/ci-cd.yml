@@ -38,7 +38,7 @@ jobs:
 
       - name: Build and push Docker image
         run: |
-          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/plant-leaf-diseases-classifier:latest .
+          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/plant-leaf-diseases-classifier:latest -f app/Dockerfile .
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/plant-leaf-diseases-classifier:latest
 
   deploy:
