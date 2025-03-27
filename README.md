@@ -39,9 +39,9 @@ fi
 
 ## How to Run the Script
 
-1. SSH into the Linux server.
-2. Upload `server_setup.sh` to the server.
-3. Run the following commands:
+1. Create `server_setup.sh` to the server.
+2. Open the linux terminal and navigate to project directory.
+3. And run the following commands:
 
 ```bash
 chmod +x server_setup.sh
@@ -50,101 +50,216 @@ chmod +x server_setup.sh
 
 ---
 
-## 2. Dependency Setup (CI)
-This step installs dependencies, builds a Docker image, and pushes it to DockerHub.
 
-### **GitHub Actions Workflow (ci.yml)**
-Create a file at `.github/workflows/ci.yml` with the following content:
+### Test the streamlit app on local:
+
+1. Install required dependencies on local:
+
+```commandline
+pip install -r requirements.txt
+```
+
+
+2. Test the streamlit app on local:
+
+```
+streamlit run app.py
+```
+
+
+### Building the docker image
+
+(Note: Run as administrator on Windows and remove "sudo" in commands)
+
+3. Important - Make sure you have installed Docker on your PC:
+- Linux: Docker
+- Windows/Mac: Docker Desktop
+
+4. Start Docker:
+- Linux (Home Directory):
+  ```
+  sudo systemctl start docker
+  ```
+- Windows: You can start Docker engine from Docker Desktop.
+
+5. Build Docker image from the project directory:
+
+```commandline
+sudo docker build -t Image_name:tag .
+```
+
+### (Note: Rerun the Docker build command if you want to make any changes to the code files and redeploy.)
+
+### Running the container & removing it
+
+6. witch to Home Directory:
+
+```
+cd ~
+```
+List the built Docker images
+```
+$ sudo docker images
+```
+
+7. Start a container:
+```commandline
+sudo docker run -p 80:80 Image_ID
+```
+
+8. This will display the URL to access the Streamlit app (http://0.0.0.0:80). Note that this URL may not work on Windows. For Windows, go to http://localhost/.
+
+9. In a different terminal window, you can check the running containers with:
+```
+sudo docker ps
+```
+
+10. Stop the container:
+ - Use `ctrl + c` or stop it from Docker Desktop.
+
+11. Check all containers:
+ ```
+ sudo docker ps -a
+ ```
+
+12. Delete the container if you are not going to run this again:
+ ```
+ sudo docker container prune
+ ```
+
+### Pushing the docker image to Docker Hub
+
+13. Sign up on Docker Hub.
+
+14. Create a repository on Docker Hub.
+
+15. Log in to Docker Hub from the terminal. You can log in with your password or access token.
+```
+sudo docker login
+```
+
+17. Tag your local Docker image to the Docker Hub repository:
+ ```
+ sudo docker tag Image_ID username/repo-name:tag
+ ```
+
+17. Push the local Docker image to the Docker Hub repository:
+ ```
+ sudo docker push username/repo-name:tag
+ ```
+
+(If you want to delete the image, you can delete the repository in Docker Hub and force delete it locally.)
+
+18. Command to force delete an image (but don't do this yet):
+ ```
+ $ sudo docker rmi -f IMAGE_ID
+ ```
+
+ ---
+
+## 2. Dependency Setup (CI) & 3. Project Deployment (CD)
+A combined workflow file (ci-cd.yml) is used for both the CI and CD processes. This file is located in the .github/workflows/ directory.
+
+### **GitHub Actions Workflow (ci-cd.yml)**
+Create a file at .github/workflows/ci-cd.yml with the following content:
 
 ```yaml
-name: CI Pipeline
+name: CI/CD Pipeline
 
 on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
-  build:
+  install-dependencies:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Repository
+      - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Set up Docker
-        run: |
-          sudo apt update
-          sudo apt install -y docker.io
+      - name: Set up Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: '3.10'
 
-      - name: Build and Push Docker Image
+      - name: Install dependencies
         run: |
-          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/my-app:latest .
+          python -m venv venv
+          source venv/bin/activate
+          pip install -r app/requirements.txt
+
+  build-and-push-docker-image:
+    needs: install-dependencies
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Log in to DockerHub
+        run: echo "${{ secrets.DOCKERHUB_PASSWORD }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+
+      - name: Build and push Docker image
+        run: |
+          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/plant-leaf-diseases-classifier:latest -f app/Dockerfile .
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/plant-leaf-diseases-classifier:latest
+
+  deploy:
+    needs: build-and-push-docker-image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install Docker Compose
+        run: |
+          sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+          sudo chmod +x /usr/local/bin/docker-compose
+
+      - name: Pull and run Docker image
+        run: |
           echo "${{ secrets.DOCKERHUB_PASSWORD }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
-          docker push ${{ secrets.DOCKERHUB_USERNAME }}/my-app:latest
+          docker pull ${{ secrets.DOCKERHUB_USERNAME }}/plant-leaf-diseases-classifier:latest
+          docker stop plant-leaf-diseases-classifier || true
+          docker rm plant-leaf-diseases-classifier || true
+          docker run -d --name plant-leaf-diseases-classifier -p 80:80 ${{ secrets.DOCKERHUB_USERNAME }}/plant-leaf-diseases-classifier:latest
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
+
 ```
+
+
 
 ### **How to Configure DockerHub Secrets**
 
-1. Go to GitHub Repository > Settings > Secrets.
+1. Go to GitHub Repository > Settings > Secrets > Actions
 2. Add the following secrets:
-   - `DOCKERHUB_USERNAME`
-   - `DOCKERHUB_PASSWORD`
+   - DOCKERHUB_USERNAME
+   - DOCKERHUB_PASSWORD
 
----
-
-## 3. Project Deployment (CD)
-This step pulls the latest Docker image and deploys it.
-
-### **GitHub Actions Workflow (cd.yml)**
-Create a file at `.github/workflows/cd.yml` with the following content:
-
-```yaml
-name: CD Pipeline
-
-on:
-  push:
-    branches:
-      - main
-
-jobs:
-  deploy:
-    runs-on: self-hosted
-    steps:
-      - name: Pull Latest Docker Image
-        run: |
-          echo "${{ secrets.DOCKERHUB_PASSWORD }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
-          docker pull ${{ secrets.DOCKERHUB_USERNAME }}/my-app:latest
-          docker stop my-app || true
-          docker rm my-app || true
-          docker run -d --name my-app -p 80:80 ${{ secrets.DOCKERHUB_USERNAME }}/my-app:latest
-```
-
-### **How to Set Up GitHub Runner**
-
-1. Go to GitHub Repository > Settings > Actions > Runners.
-2. Click **New self-hosted runner**.
-3. Follow the instructions to install and start the runner.
-
----
-
-## Conclusion
-
-- **Server Setup**: Installs Docker and Nginx on the target Linux machine.
-- **CI Process**: Builds a Docker image from your code and pushes it to DockerHub.
-- **CD Process**: Pulls the latest image from DockerHub and deploys it on your server via a self-hosted GitHub Runner.
-
-This setup ensures an automated CI/CD pipeline for your project. 🚀
-
-## Additional Resources
-
-For further learning and a more comprehensive understanding, you may find the following resources helpful:
-
-- **[Setting up a CI/CD workflow on GitHub Actions for a React App](https://dev.to/dyarleniber/setting-up-a-ci-cd-workflow-on-github-actions-for-a-react-app-with-github-pages-and-codecov-4hnp)**
-- **[Implementing CI/CD pipeline with GitHub Actions and GitHub Pages in a React App](https://dev.to/efkumah/implementing-cicd-pipeline-with-github-actions-and-github-pages-in-a-react-app-ij9)**
-- **[Step-by-Step Guide to Configuring a Self-Hosted Runner in GitHub Actions](https://dev.to/s3cloudhub/step-by-step-guide-to-configuring-a-self-hosted-runner-in-github-actions-2024-2b7j)**
-- **[Using secrets in GitHub Actions](https://docs.github.com/en/actions/security-guides/using-secrets-in-github-actions)**
-- **[Deploying a Production-ready React-Express app on AWS](https://gist.github.com/rmiyazaki6499/b564b40e306707c8ff6ca9c67d38fb6f)**
+Since this pipeline uses GitHub-hosted runners, no additional runner setup is required.
 
 
-- **[GitHub Actions CI/CD for React Apps](https://www.youtube.com/watch?v=R8_veQiYBjI)**
-- **[Setting Up a Self-Hosted Runner in GitHub Actions](https://www.youtube.com/watch?v=L9shM55Qmu8)**
+### Conclusion
+
+    Server Setup: Installs Docker and Nginx on the target Linux machine.
+
+    CI Process: Installs project dependencies, builds a Docker image from your code, and pushes it to DockerHub.
+
+    CD Process: Pulls the latest image from DockerHub and deploys it on your server using GitHub-hosted runners.
+
+This setup ensures an automated CI/CD pipeline for your project. 
+
+
+## Resources used
+
+- **[ Getting Started with CI/CD Pipeline in MLOps | DevOps Made Easy 🚀 ](https://www.youtube.com/watch?v=4T1upPqoYm8)**
+- **[ Deploy a Machine Learning Streamlit App Using Docker Containers | 2024 Tutorial | Step-by-Step Guide ](https://www.youtube.com/watch?v=5pPTNzUcIxg)**
+- **[github.com/siddhardhan23/ci-cd-pipeline-getting-started](https://github.com/siddhardhan23/ci-cd-pipeline-getting-started)**
+- **[ Integrating CI/CD Pipeline in Python Project with GitHub Actions 🚀 | Hands-On Tutorial ](https://www.youtube.com/watch?v=T-l00oT4yfA&t=1057s)**
+- **[ How To Deploy A Machine Learning Model On AWS EC2 | AUG 2021 Updated | ML Model To Flask Website ](https://www.youtube.com/watch?v=_rwNTY5Mn40)**
+- **[ How to Create Nginx Server in AWS | Nginx Server using EC2 Instance | Deploy Nginx Server using EC2 ](https://www.youtube.com/watch?v=casCo-d872I&t=177s)**
