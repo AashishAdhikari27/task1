@@ -246,11 +246,11 @@ Since this pipeline uses GitHub-hosted runners, no additional runner setup is re
 
 ### Conclusion
 
-    Server Setup: Installs Docker and Nginx on the target Linux machine.
+  1.Server Setup: Installs Docker and Nginx on the target Linux machine.
 
-    CI Process: Installs project dependencies, builds a Docker image from your code, and pushes it to DockerHub.
+  2.CI Process: Installs project dependencies, builds a Docker image from your code, and pushes it to DockerHub.
 
-    CD Process: Pulls the latest image from DockerHub and deploys it on your server using GitHub-hosted runners.
+  3.CD Process: Pulls the latest image from DockerHub and deploys it on your server using GitHub-hosted runners.
 
 This setup ensures an automated CI/CD pipeline for your project. 
 
